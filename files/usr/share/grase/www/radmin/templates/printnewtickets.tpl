@@ -57,6 +57,12 @@
                         <span class='info_expiry  last'>{$user.FormatExpiration}</span>
                         <br/>
                     {/if}
+					{if $qrcode}
+						<span class="ticket_item_label">
+							<img src="{$user.qrimage}" width="196" height="196">
+						</span>
+					{/if}
+                    
                     {$postTicketHTML}
                 </div>
             {/foreach}
