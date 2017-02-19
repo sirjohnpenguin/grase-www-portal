@@ -25,6 +25,11 @@ require_once 'includes/pageaccess.inc.php';
 require_once 'includes/session.inc.php';
 require_once 'includes/misc_functions.inc.php';
 
+// qrcode
+require_once 'includes/qrcode_config.php';
+require_once 'includes/phpqrcode/qrlib.php'; 
+// qrcode
+
 function validate_form()
 {
     $error = array();
@@ -127,6 +132,9 @@ if (isset($_POST['batchesdelete'])) {
         }
         foreach ($users as $user) {
             DatabaseFunctions::getInstance()->deleteUser($user['Username']);
+			// qrcode
+			unlink(QRCODE_TMP_SERVERPATH.md5($user['Username']).'.png');
+			// qrcode
             $success[] = "Deleting " . $user['Username'];
             // Maybe delete user from batch as we go to ensure if we fail
             // at any point the batch is correct?
@@ -220,6 +228,19 @@ if (isset($_POST['createticketssubmit'])) {
                 \Grase\Clean::text($_POST['Comment'])
             )
             ) {
+				
+				// qrcode
+				if($Settings->getSetting('qrcode')=='TRUE'){
+					$qrcode_var=$username."::".$password;
+					$qrcode_login_data=encrypt_qrcode($qrcode_var);
+					$qrfilename=md5($username);
+					
+					$codeContents = URL_GRASE_QRCODE.$qrcode_login_data; 
+
+					QRcode::png($codeContents, QRCODE_TMP_SERVERPATH.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
+                }
+                // qrcode
+				
                 AdminLog::getInstance()->log("Created new user $username");
                 $Settings->addUserToBatch($batchID, $username);
                 $createdUsernames[] = $username;
