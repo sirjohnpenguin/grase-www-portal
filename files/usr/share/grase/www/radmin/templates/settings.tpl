@@ -71,7 +71,16 @@
         <input type="url" name="websitelink" id="websitelink" value='{$website_link|escape}'/>
         <span id="websitelinkInfo">{t}Link for Website Footer Link{/t}</span>
     </div>   
-   
+       <!--qrcode-->
+    <div>
+        <label for='qrcodelink'>{t}QR Code{/t}</label>
+			<select name="qrcode">
+				<option value="TRUE" {$qrcode_enabled|escape}>Enabled</option>
+				<option value="FALSE" {$qrcode_disabled|escape}>Disabled</option>
+			</select>
+        <span id="qrcodelinkInfo">{t}Globally enable or disable QR Code generation{/t}</span>
+    </div>   
+   <!--qrcode-->
     <button type="submit" name="submit">{t}Save Settings{/t}</button> 
 
 </form>
