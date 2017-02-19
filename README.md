@@ -11,3 +11,12 @@ See the Wiki page <https://github.com/GraseHotspot/grase-www-portal/wiki/Install
 ### grase-www-portal package/repository
 
 This is the main Grase Hotspot package. It contains the web interface, and depends on the config packages.
+
+## qrcode support
+
+
+QR Code support using phpqrcode library from <http://phpqrcode.sourceforge.net/>
+Tested on ubuntu 14.04. Requires php5-gd
+
+Uses the openssl php functions for encrypt/decrypt credentials for login in the hotspot.
+
