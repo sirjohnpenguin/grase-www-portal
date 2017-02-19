@@ -25,6 +25,11 @@ require_once 'includes/pageaccess.inc.php';
 require_once 'includes/session.inc.php';
 require_once 'includes/misc_functions.inc.php';
 
+// qrcode
+require_once 'includes/qrcode_config.php';
+require_once 'includes/phpqrcode/qrlib.php'; 
+// qrcode
+
 // Check if _GET['username'] is set, and that the username exists (checkUniqueUsername returns true if it doesn't exist)
 if (!isset($_GET['username']) || DatabaseFunctions::getInstance()->checkUniqueUsername($_GET['username'])) {
     // Redirect to display all users
@@ -51,6 +56,16 @@ if (isset($_POST['updateusersubmit'])) {   // Process form for changed items and
         // TODO: Check return for success
         $success[] = T_("Password Changed");
         AdminLog::getInstance()->log("Password changed for $username");
+        // qrcode
+       	if(($Settings->getSetting('qrcode')=='TRUE') AND (!\Grase\Validate::MACAddress(strtoupper($username)))){
+			$qrcode_var=$username."::".$_POST['Password'];
+			$qrcode_login_data=encrypt_qrcode($qrcode_var);
+			$qrfilename=md5($username);
+			
+			$codeContents = URL_GRASE_QRCODE.$qrcode_login_data; 
+			QRcode::png($codeContents, QRCODE_TMP_SERVERPATH.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
+		}
+        // qrcode
     }
 
     // Update group if changed
@@ -183,6 +198,12 @@ if (isset($_POST['deleteusersubmit'])) {
     $templateEngine->assign("error", $error);
     $templateEngine->assign("success", $success);
     require('display.php');
+	// qrcode
+	if(($Settings->getSetting('qrcode') == 'TRUE') AND (!\Grase\Validate::MACAddress(strtoupper($username)))) {
+
+		unlink(QRCODE_TMP_SERVERPATH.md5($username).'.png');
+	}
+    // qrcode
     die; // TODO: Recode so don't need die (too many nests?)
 
 }
