@@ -30,6 +30,11 @@ require_once 'includes/pageaccess.inc.php';
 require_once 'includes/session.inc.php';
 require_once 'includes/misc_functions.inc.php';
 
+// qrcode
+require_once 'includes/qrcode_config.php';
+require_once 'includes/phpqrcode/qrlib.php'; 
+// qrcode
+
 function validate_form($userDetails, $type = 'User')
 {
     $error = array();
@@ -162,7 +167,19 @@ if (isset($_POST['newusersubmit']) || isset($_POST['newmachinesubmit'])) {
             sprintf(T_("Print Ticket for %s"), $user['Username']) . "</a>";
         AdminLog::getInstance()->log(sprintf(T_("Created new user %s"), $user['Username']));
         $templateEngine->assign("success", $success);
+        
+        // qrcode
+       	if(($Settings->getSetting('qrcode')=='TRUE') AND ($type=='User')){
+						
+			$qrcode_var=$user['Username']."::".$user['Password'];
+			$qrcode_login_data=encrypt_qrcode($qrcode_var);
+			$qrfilename=md5($user['Username']);			
+			$codeContents = URL_GRASE_QRCODE.$qrcode_login_data; 
 
+			QRcode::png($codeContents, QRCODE_TMP_SERVERPATH.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
+		}
+        // qrcode
+        
         // We are now loading the form afresh, ensure we clear the $user array
         $user = array();
     }
