@@ -1,5 +1,8 @@
 <?php
-
+// qrcode
+session_start();
+include ('../radmin/includes/qrcode_config.php');
+// qrcode
 require_once('includes/site.inc.php');
 
 load_templates(array('loginhelptext', 'belowloginhtml', 'termsandconditions', 'aboveloginhtml'));
@@ -7,6 +10,50 @@ load_templates(array('loginhelptext', 'belowloginhtml', 'termsandconditions', 'a
 /*$loginurl = parse_url($_GET['loginurl']);
 $query = $loginurl['query'];
 parse_str($query, $uamopts);*/
+
+// qrcode
+if($Settings->getSetting('qrcode') == 'TRUE'){
+
+
+	if (isset($_GET['qrc'])){
+		$qrc = $_GET['qrc'];
+		$_SESSION['qrcode'] = $qrc;
+		header("Location: http://$lanIP:3990/prelogin");
+		die();
+		
+	}    
+	if ($_SESSION['qrcode']){
+		$decrypted_userpass = decrypt_qrcode($_SESSION['qrcode']);
+		list($qruser, $qrpass) = explode("::",$decrypted_userpass , 2);
+		
+		if (\Grase\Validate::MACAddress(strtoupper($qruser))) {
+			session_destroy();
+			header("Location: http://$lanIP:3990/prelogin");
+			die();
+		}
+		
+		$username = $qruser;
+		$password = $qrpass;
+		$challenge = $_GET['challenge'];
+		$userurl = urlencode(URL_USER_QRCODE);
+		$ident = '00';
+
+
+		if (! ( $username && $password && $challenge) )
+		{
+			header("Location: http://$lanIP:3990/prelogin");
+		}
+		$hexchal = pack ("H32", $challenge);
+		$response = md5("\0" . $password . $hexchal);
+		$challenge = urlencode($challenge);
+		session_destroy();
+		
+		header("Location: http://$lanIP:3990/login?username=$username&response=$response&userurl=$userurl");
+		//die();
+		
+	}
+}
+// qrcode
 
 if(isset($_GET['disablejs']))
 {
@@ -120,10 +167,13 @@ switch($res)
             break;
         }
         //
-        load_templates(array('loggedinnojshtml'));
-        $smarty->display('loggedin.tpl');
-        exit;
-        break;        
+        if ($nojs){ // if js is disabled
+			load_templates(array('loggedinnojshtml'));
+			$smarty->display('loggedin.tpl');
+			exit;
+		}
+        
+        break; // show default       
         
 }
 
