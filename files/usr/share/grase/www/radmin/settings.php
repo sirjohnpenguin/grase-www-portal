@@ -39,6 +39,17 @@ if (isset($_POST['submit'])) {
     $newLocale = \Grase\Clean::text($_POST['locale']);
     $newWebsiteName = \Grase\Clean::text($_POST['websitename']);
     $newWebsiteLink = \Grase\Clean::text($_POST['websitelink']);
+	
+	// qrcode
+    $newqrcode = \Grase\Clean::text($_POST['qrcode']);
+	updateqrcode($newqrcode);
+
+	if ($newqrcode != $Settings->getSetting('qrcode')) {
+        $Settings->setSetting('qrcode', $newqrcode);
+        $success[] = T_("QR Code Options Updated");
+    }
+    // qrcode
+    
     // Check for changed items
 
     updateLocation($newLocationName);
@@ -103,12 +114,52 @@ $templateEngine->assign("website_link", $Settings->getSetting('websiteLink'));
 
 $templateEngine->assign("available_languages", \Grase\Locale::getAvailableLanguages());
 
+// qrcode
+// if setting 'qrcode' dont exist, we made it
+// at least for now, its better if it is generated at install
+
+if (($Settings->getSetting('qrcode') != 'TRUE') AND ($Settings->getSetting('qrcode') != 'FALSE')){
+	$success[] = T_("QR Code Currently Disabled.");
+	$Settings->setSetting('qrcode', 'FALSE');
+
+}
+if ($Settings->getSetting('qrcode')=='TRUE'){
+	$templateEngine->assign("qrcode_enabled", "selected");
+	$templateEngine->assign("qrcode_disabled", "");
+}else{
+	$templateEngine->assign("qrcode_enabled", "");	
+	$templateEngine->assign("qrcode_disabled", "selected");	
+}
+// qrcode
+
 if (sizeof($error) > 0) {
     $templateEngine->assign("error", $error);
 }
 if (sizeof($success) > 0) {
     $templateEngine->assign("success", $success);
 }
+
+// qrcode
+function updateqrcode($newqrcode)
+{
+    global $error, $Settings, $success;
+
+    if ($Settings->getSetting('qrcode') == $newqrcode) {
+        return true;
+    }
+
+    if ($newqrcode == "" || strpos($newqrcode, ' ') !== false) {
+        $error[] = T_("QR Code setting invalid");
+    } else {
+        if ($Settings->setSetting('qrcode', $newqrcode)) {
+            $success[] = T_("QR Code Options updated");
+            AdminLog::getInstance()->log(T_("QR Code Options updated"));
+        } else {
+            $error[] = T_("Error Saving QR Code Options");
+        }
+    }
+}
+// qrcode
 
 // Location
 
