@@ -24,6 +24,11 @@ require_once 'includes/pageaccess.inc.php';
 require_once 'includes/session.inc.php';
 require_once 'includes/misc_functions.inc.php';
 
+// qrcode
+require_once 'includes/qrcode_config.php';
+require_once 'includes/phpqrcode/qrlib.php'; 
+// qrcode
+
 $DBF = DatabaseFunctions::getInstance();
 
 if (isset($_GET['user'])) {
@@ -121,6 +126,24 @@ function generate_csv($users, $title)
 function printTickets($users, $title)
 {
     global $templateEngine, $Settings;
+    
+	// qrcode
+	if($Settings->getSetting('qrcode') == 'TRUE'){
+
+		foreach ($users as $key => $userdata){
+			if (!\Grase\Validate::MACAddress(strtoupper($userdata['Username']))) { //if user != macaddress
+				$filename=QRCODE_TMP_SERVERPATH.md5($userdata['Username']).'.png';
+				$image='data:image/png;base64,'.base64_encode(file_get_contents($filename)); 
+				$users[$key]['qrimage']=$image;
+				$no_qrimage=FALSE;
+			}else{
+		
+				$no_qrimage=TRUE;
+			}
+		}
+	}
+	// qrcode
+	
     $users_groups = sort_users_into_groups($users);
     $templateEngine->assign("batchTitle", $title);
     $templateEngine->assign("users", $users);
@@ -132,5 +155,10 @@ function printTickets($users, $title)
     $templateEngine->assign("ticketPrintCSS", $Settings->getTemplate('ticketPrintCSS'));
     $templateEngine->assign("preTicketHTML", $Settings->getTemplate('preTicketHTML'));
     $templateEngine->assign("postTicketHTML", $Settings->getTemplate('postTicketHTML'));
+	// qrcode
+    if(($Settings->getSetting('qrcode')=='TRUE') AND ($no_qrimage==FALSE)){
+		$templateEngine->assign("qrcode", $Settings->getSetting('qrcode'));
+	}
+    // qrcode
     $templateEngine->displayPage('printnewtickets.tpl');
 }
