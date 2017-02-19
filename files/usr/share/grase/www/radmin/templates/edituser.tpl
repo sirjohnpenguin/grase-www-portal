@@ -10,7 +10,8 @@
 <form method='post' name='edituser' action='' class='generalForm'>
 <div>
     <label for='Username'>{t}Username{/t}</label>
-    <input disabled='disabled' type="text" name="Username" value='{$user.Username|escape}'/>
+    <input disabled='disabled' type="text" name="Username" value='{$user.Username|escape}'/> <span id="Print-Ticket"><a href="export.php?format=html&user={$user.Username|escape}" target="_blank">{t}Print ticket{/t}</a></span>
+
     <span id="UsernameInfo">&nbsp;</span>
 </div>
 
