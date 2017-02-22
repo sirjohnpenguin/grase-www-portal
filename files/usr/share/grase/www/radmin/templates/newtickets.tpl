@@ -51,7 +51,18 @@
     <input type="text" name="Comment" id="Comment" value='{$user.Comment|escape}'/>
     <span id='CommentInfo'>A comment that is applied to all tickets</span>
 </div>
-
+{if $qrcode}
+       <!--qrcode-->
+    <div>
+        <label for='qrcodelink'>{t}QR Code ticket{/t}</label>
+			<select name="qrcode">
+				<option value="TRUE" {$qrcode_enabled|escape}>Enabled</option>
+				<option value="FALSE" {$qrcode_disabled|escape}>Disabled</option>
+			</select>
+        <span id="qrcodelinkInfo">{t}Generate QR Code for batch users{/t}</span>
+    </div>   
+   <!--qrcode-->
+{/if}
     <p><span>{t}When ether limit is reached, the user will be cut off. (i.e. after 1hour even if they still have data left){/t}<br/>
     {t}A limit of 0 does not mean unlimited, it will immediately lock the user out. To have an unlimited user, the user must be created without any limits.{/t}<br/><strong>{t}If a limit is not set here, but is defined for the group, then the group limit will apply{/t}</strong></span></p>
 
