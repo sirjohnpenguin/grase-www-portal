@@ -79,7 +79,30 @@
 				<option value="FALSE" {$qrcode_disabled|escape}>Disabled</option>
 			</select>
         <span id="qrcodelinkInfo">{t}Globally enable or disable QR Code generation{/t}</span>
-    </div>   
+    </div> 
+
+{if $qrcode}
+    <div>
+    	<span id="qrcodesettings"><strong>{t}QR Code settings{/t}</strong></span>
+        <label for='qrcode_qrimages'>{t}Generated images dir{/t}</label>
+        <input type="qrcode_qrimages" name="qrcode_qrimages" id="qrcode_qrimages" value='{$qrcode_qrimages|escape}'/>
+        <span id="qrcode_qrimages">{t}Directory where save generated QR Code images. Must have read and write permissions.{/t}</span>
+    </div> 
+    <div>
+    
+        <label for='qrcode_hotspot_url'>{t}Hotspot url{/t}</label>
+        <input type="qrcode_hotspot_url" name="qrcode_hotspot_url" id="qrcode_hotspot_url" value='{$qrcode_hotspot_url|escape}'/>
+        <span id="qrcode_hotspot_url">{t}Hotspot url, do not remove the "?qrc=" parameter.{/t}</span>
+    </div>
+     
+    <div>
+        <label for='qrcode_user_url'>{t}Url redirect for user{/t}</label>
+        <input type="qrcode_user_url" name="qrcode_user_url" id="qrcode_user_url" value='{$qrcode_user_url|escape}'/>
+        <span id="qrcode_user_url">{t}Redirect succesfully logged user to this url.{/t}</span>
+    </div> 
+    
+{/if}    
+      
    <!--qrcode-->
     <button type="submit" name="submit">{t}Save Settings{/t}</button> 
 
