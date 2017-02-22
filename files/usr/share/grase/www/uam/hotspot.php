@@ -1,7 +1,6 @@
 <?php
 // qrcode
 session_start();
-include ('../radmin/includes/qrcode_config.php');
 // qrcode
 require_once('includes/site.inc.php');
 
@@ -23,17 +22,35 @@ if($Settings->getSetting('qrcode') == 'TRUE'){
 		
 	}    
 	if ($_SESSION['qrcode']){
-		$decrypted_userpass = decrypt_qrcode($_SESSION['qrcode']);
-		list($qruser, $qrpass) = explode("::",$decrypted_userpass , 2);
+		$userID=substr($_SESSION['qrcode'],32);
+		$userTOKEN=substr($_SESSION['qrcode'],0,32);
+		$userQRDATA=DatabaseFunctions::getInstance()->getUserFromQRCodeHash($userTOKEN);
+		$username=$userQRDATA["Username"];
 		
-		if (\Grase\Validate::MACAddress(strtoupper($qruser))) {
+		if ($userQRDATA["QRCodeHash"] == NULL){ //if user qrcode disabled, dieee()
 			session_destroy();
 			header("Location: http://$lanIP:3990/prelogin");
 			die();
 		}
 		
-		$username = $qruser;
-		$password = $qrpass;
+		if (($userID == $userQRDATA["id"]) AND ($userTOKEN == $userQRDATA["QRCodeHash"])){
+			$user_details=DatabaseFunctions::getInstance()->getUserDetails($username);
+			$username=$user_details["Username"];
+			$password=$user_details["Password"];
+			
+		}else{
+			session_destroy();
+			header("Location: http://$lanIP:3990/prelogin");
+			die();
+		}
+
+		
+		if (\Grase\Validate::MACAddress(strtoupper($username))) {
+			session_destroy();
+			header("Location: http://$lanIP:3990/prelogin");
+			die();
+		}
+
 		$challenge = $_GET['challenge'];
 		$userurl = urlencode(URL_USER_QRCODE);
 		$ident = '00';
