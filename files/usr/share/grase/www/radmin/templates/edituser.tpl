@@ -62,6 +62,19 @@
     <input type="text" name="Comment" value='{$user.Comment|escape}' autofocus="autofocus"/>
     <span id='CommentInfo'>{t}A comment about the user{/t}</span>
 </div>
+{if $qrcode}
+
+       <!--qrcode-->
+    <div>
+        <label for='qrcodelink'>{t}QR Code ticket{/t}</label>
+			<select name="qrcode">
+				<option value="TRUE" {$qrcode_enabled|escape}>Enabled</option>
+				<option value="FALSE" {$qrcode_disabled|escape}>Disabled</option>
+			</select>
+        <span id="qrcodelinkInfo">{t}QR Code enabled/disabled for current user{/t}</span>
+    </div>   
+   <!--qrcode-->
+{/if}
 
 <div>
     <label for='LockReason'>{t}Account Lock Reason{/t}</label>
