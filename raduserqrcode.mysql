@@ -1,5 +1,5 @@
 --
--- in radius table
+-- in radius db
 --
 DROP TABLE IF EXISTS `raduserqrcode`;
 CREATE TABLE IF NOT EXISTS `raduserqrcode` (
