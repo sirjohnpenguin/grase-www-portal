@@ -31,8 +31,8 @@ require_once 'includes/session.inc.php';
 require_once 'includes/misc_functions.inc.php';
 
 // qrcode
-require_once 'includes/qrcode_config.php';
 require_once 'includes/phpqrcode/qrlib.php'; 
+require_once 'includes/random_compat-2.0.4/lib/random.php'; 
 // qrcode
 
 function validate_form($userDetails, $type = 'User')
@@ -170,13 +170,24 @@ if (isset($_POST['newusersubmit']) || isset($_POST['newmachinesubmit'])) {
         
         // qrcode
        	if(($Settings->getSetting('qrcode')=='TRUE') AND ($type=='User')){
-						
-			$qrcode_var=$user['Username']."::".$user['Password'];
-			$qrcode_login_data=encrypt_qrcode($qrcode_var);
-			$qrfilename=md5($user['Username']);			
-			$codeContents = URL_GRASE_QRCODE.$qrcode_login_data; 
-
-			QRcode::png($codeContents, QRCODE_TMP_SERVERPATH.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
+			$user['qrcode'] = \Grase\Clean::text($_POST['qrcode']);
+			if ($user['qrcode'] == "TRUE"){			
+				do {
+					$QRCodeHash = bin2hex(random_bytes(16)); //random_compat library
+					
+				} while (!DatabaseFunctions::getInstance()->checkUniqueQRCode($QRCodeHash));
+				
+				DatabaseFunctions::getInstance()->setUserQRCode($user['Username'],$QRCodeHash);
+				$qrfilename=md5($user['Username']);
+				$qruserID=DatabaseFunctions::getInstance()->getUserFromQRCodeHash($QRCodeHash);
+				$qrcode_hotspot_url = $Settings->getSetting('qrcode_hotspot_url');
+				$qrcode_qrimages = $Settings->getSetting('qrcode_qrimages');
+				$qrcode_content = $qrcode_hotspot_url.$QRCodeHash.$qruserID['id']; //append user id at end
+				
+				QRcode::png($qrcode_content, $qrcode_qrimages.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
+			}else{
+				DatabaseFunctions::getInstance()->setUserQRCode($user['Username'],false);
+			}
 		}
         // qrcode
         
@@ -192,4 +203,13 @@ $user['Max_Mb'] = 'inherit';
 $user['Max_Time'] = 'inherit';
 $user['Expiration'] = "--";
 $templateEngine->assign("user", $user);
+
+// qrcode
+if ($Settings->getSetting('qrcode') == "TRUE"){
+	$templateEngine->assign("qrcode", TRUE);
+
+}
+
+// qrcode
+
 $templateEngine->displayPage($templateFile);
