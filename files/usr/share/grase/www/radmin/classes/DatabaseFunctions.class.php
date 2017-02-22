@@ -1952,4 +1952,134 @@ class DatabaseFunctions
         return $user;
 
     }
+    
+    // qrcode
+    
+        public function setUserQRCode($username, $qrcode_hash)
+    {
+        $fields = array(
+            'Username' => array('value' => $username, 'key' => true),
+            'QRCodeHash' => array('value' => $qrcode_hash . ' ')
+        );
+
+        $result = $this->db->replace('raduserqrcode', $fields);
+
+        if (PEAR::isError($result)) {
+            \Grase\ErrorHandling::fatalDatabaseError(
+                T_('Setting User QRCodeHash Query Failed: '),
+                $result
+            );
+        }
+
+        return $result;
+    }
+    
+    
+        public function getUserQRCode($username)
+    {
+        if ($this->usercacheloaded) {
+            return trim(
+                $this->usercache[mb_strtolower($username)]['QRCodeHash']
+            );
+        }
+
+        $sql = sprintf(
+            "SELECT QRCodeHash
+                                     FROM raduserqrcode
+                                     WHERE Username = %s",
+            $this->db->quote($username)
+        );
+
+        $results = $this->db->queryOne($sql);
+
+        if (PEAR::isError($results)) {
+            \Grase\ErrorHandling::fatalDatabaseError(
+                T_('Get User QRCodeHash failed: '),
+                $results
+            );
+        }
+
+        return trim($results);
+    }
+    
+        public function checkUniqueQRCode($QRCodeHash)
+    {
+        $sql = sprintf(
+            "SELECT QRCodeHash
+                        FROM raduserqrcode
+                        WHERE QRCodeHash= %s",
+            $this->db->quote($QRCodeHash)
+        );
+
+        $results = $this->db->query($sql);
+
+        if (PEAR::isError($results)) {
+            \Grase\ErrorHandling::fatalDatabaseError(
+                T_('Checking Uniq QRCodeHash failed: '),
+                $results
+            );
+        }
+
+        $unique = true;
+        if ($results->numRows() != 0) {
+            $unique = false;
+        }
+
+        return $unique;
+    }
+    
+    public function getUserFromQRCodeHash($QRCodeHash)
+    {
+        if ($this->usercacheloaded) {
+            return trim(
+                $this->usercache[mb_strtolower($QRCodeHash)]['QRCodeHash']
+            );
+        }
+
+        $sql = sprintf(
+            "SELECT Username, id, QRCodeHash
+                                     FROM raduserqrcode
+                                     WHERE QRCodeHash = %s",
+            $this->db->quote($QRCodeHash)
+        );
+
+        $results = $this->db->queryAll($sql);
+
+        if (PEAR::isError($results)) {
+            \Grase\ErrorHandling::fatalDatabaseError(
+                T_('Get User QRCodeHash failed: '),
+                $results
+            );
+        }
+		$data=array();
+		
+		foreach ($results as $user){
+			$data["id"]=$user["id"];
+			$data["Username"]=$user["Username"];
+			$data["QRCodeHash"]=$user["QRCodeHash"];
+			
+		}
+        return $data;
+    }
+    
+    public function deleteQRCodeHash($username)
+    {
+
+        $sql = sprintf(
+            "DELETE FROM raduserqrcode
+                                WHERE Username=%s",
+            $this->db->quote($username)
+        );
+
+        $result = $this->db->queryOne($sql);
+
+        if (PEAR::isError($result)) {
+            \Grase\ErrorHandling::fatalDatabaseError(
+                T_('Removing QRCodeHash Query Failed: '),
+                $result
+            );
+        }
+
+    }
+    // qrcode
 }
