@@ -23,6 +23,7 @@ $PAGE = 'settings';
 require_once 'includes/pageaccess.inc.php';
 require_once 'includes/session.inc.php';
 require_once 'includes/misc_functions.inc.php';
+require_once 'includes/random_compat-2.0.4/lib/random.php'; // qrcode
 
 $error = array();
 $success = array();
@@ -42,8 +43,17 @@ if (isset($_POST['submit'])) {
 	
 	// qrcode
     $newqrcode = \Grase\Clean::text($_POST['qrcode']);
+    $new_qrcode_hotspot_url = \Grase\Clean::text($_POST['qrcode_hotspot_url']);
+    $new_qrcode_qrimages = \Grase\Clean::text($_POST['qrcode_qrimages']);
+    $new_qrcode_user_url = \Grase\Clean::text($_POST['qrcode_user_url']);
+	
+	if ($Settings->getSetting('qrcode') == "TRUE"){
+		qrcode_hotspot_url($new_qrcode_hotspot_url);
+		qrcode_qrimages($new_qrcode_qrimages);
+		qrcode_user_url($new_qrcode_user_url);
+	}
 	updateqrcode($newqrcode);
-
+	
 	if ($newqrcode != $Settings->getSetting('qrcode')) {
         $Settings->setSetting('qrcode', $newqrcode);
         $success[] = T_("QR Code Options Updated");
@@ -119,17 +129,26 @@ $templateEngine->assign("available_languages", \Grase\Locale::getAvailableLangua
 // at least for now, its better if it is generated at install
 
 if (($Settings->getSetting('qrcode') != 'TRUE') AND ($Settings->getSetting('qrcode') != 'FALSE')){
+	$success[] = T_("QR Code Default settings added.");
 	$success[] = T_("QR Code Currently Disabled.");
 	$Settings->setSetting('qrcode', 'FALSE');
+	$Settings->setSetting('qrcode_qrimages', '/usr/share/grase/qrimages/');
+	$Settings->setSetting('qrcode_hotspot_url', 'http://10.1.0.1/uam/hotspot?qrc=');
+	$Settings->setSetting('qrcode_user_url', 'http://google.com/');
 
 }
 if ($Settings->getSetting('qrcode')=='TRUE'){
+	$templateEngine->assign("qrcode", TRUE);
 	$templateEngine->assign("qrcode_enabled", "selected");
 	$templateEngine->assign("qrcode_disabled", "");
 }else{
 	$templateEngine->assign("qrcode_enabled", "");	
 	$templateEngine->assign("qrcode_disabled", "selected");	
 }
+$templateEngine->assign("qrcode_qrimages",$Settings->getSetting('qrcode_qrimages') );	
+$templateEngine->assign("qrcode_hotspot_url",$Settings->getSetting('qrcode_hotspot_url') );	
+$templateEngine->assign("qrcode_user_url",$Settings->getSetting('qrcode_user_url') );	
+
 // qrcode
 
 if (sizeof($error) > 0) {
@@ -148,7 +167,7 @@ function updateqrcode($newqrcode)
         return true;
     }
 
-    if ($newqrcode == "" || strpos($newqrcode, ' ') !== false) {
+    if ($newqrcode == "" ) {
         $error[] = T_("QR Code setting invalid");
     } else {
         if ($Settings->setSetting('qrcode', $newqrcode)) {
@@ -156,6 +175,66 @@ function updateqrcode($newqrcode)
             AdminLog::getInstance()->log(T_("QR Code Options updated"));
         } else {
             $error[] = T_("Error Saving QR Code Options");
+        }
+    }
+}
+
+function qrcode_hotspot_url($newqrcode)
+{
+    global $error, $Settings, $success;
+
+    if ($Settings->getSetting('qrcode_hotspot_url') == $newqrcode) {
+        return true;
+    }
+
+    if ($newqrcode == "") {
+        $error[] = T_("QR Code setting invalid");
+    } else {
+        if ($Settings->setSetting('qrcode_hotspot_url', $newqrcode)) {
+            $success[] = T_("QR Code Hotspot url updated");
+            AdminLog::getInstance()->log(T_("QR Code Hotspot url updated"));
+        } else {
+            $error[] = T_("Error Saving QR Code Hotspot url");
+        }
+    }
+}
+
+function qrcode_qrimages($newqrcode)
+{
+    global $error, $Settings, $success;
+
+    if ($Settings->getSetting('qrcode_qrimages') == $newqrcode) {
+        return true;
+    }
+
+    if ($newqrcode == "") {
+        $error[] = T_("QR Code images dir invalid");
+    } else {
+        if ($Settings->setSetting('qrcode_qrimages', $newqrcode)) {
+            $success[] = T_("QR Code images dir updated");
+            AdminLog::getInstance()->log(T_("QR Code images dir updated"));
+        } else {
+            $error[] = T_("Error Saving QR Code images dir");
+        }
+    }
+}
+
+function qrcode_user_url($newqrcode)
+{
+    global $error, $Settings, $success;
+
+    if ($Settings->getSetting('qrcode_user_url') == $newqrcode) {
+        return true;
+    }
+
+    if ($newqrcode == "") {
+        $error[] = T_("QR Code images dir invalid");
+    } else {
+        if ($Settings->setSetting('qrcode_user_url', $newqrcode)) {
+            $success[] = T_("QR Code redirect url updated");
+            AdminLog::getInstance()->log(T_("QR Code redirect url updated"));
+        } else {
+            $error[] = T_("Error Saving QR Code redirect url");
         }
     }
 }
