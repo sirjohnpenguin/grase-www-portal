@@ -26,8 +26,9 @@ require_once 'includes/session.inc.php';
 require_once 'includes/misc_functions.inc.php';
 
 // qrcode
-require_once 'includes/qrcode_config.php';
+//require_once 'includes/qrcode_config.php';
 require_once 'includes/phpqrcode/qrlib.php'; 
+require_once 'includes/random_compat-2.0.4/lib/random.php'; 
 // qrcode
 
 // Check if _GET['username'] is set, and that the username exists (checkUniqueUsername returns true if it doesn't exist)
@@ -44,6 +45,14 @@ $success = array();
 $user = DatabaseFunctions::getInstance()->getUserDetails($_GET['username']);
 $username = $user['Username'];
 
+// qrcode
+if (DatabaseFunctions::getInstance()->getUserQRCode($_GET['username']) == NULL){
+	$userqrcode = "FALSE";
+}else{
+	$userqrcode = "TRUE";
+}
+// qrcode
+
 if (isset($_POST['updateusersubmit'])) {   // Process form for changed items and do updates
     $addMb = clean_number($_POST['Add_Mb']);
     $maxMb = clean_number($_POST['MaxMb']);
@@ -58,16 +67,59 @@ if (isset($_POST['updateusersubmit'])) {   // Process form for changed items and
         AdminLog::getInstance()->log("Password changed for $username");
         // qrcode
        	if(($Settings->getSetting('qrcode')=='TRUE') AND (!\Grase\Validate::MACAddress(strtoupper($username)))){
-			$qrcode_var=$username."::".$_POST['Password'];
-			$qrcode_login_data=encrypt_qrcode($qrcode_var);
-			$qrfilename=md5($username);
 			
-			$codeContents = URL_GRASE_QRCODE.$qrcode_login_data; 
-			QRcode::png($codeContents, QRCODE_TMP_SERVERPATH.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
+			do {
+				$QRCodeHash = bin2hex(random_bytes(16));
+				
+			} while (!DatabaseFunctions::getInstance()->checkUniqueQRCode($QRCodeHash));
+			
+			DatabaseFunctions::getInstance()->setUserQRCode($username,$QRCodeHash);
+			$qrfilename=md5($username);
+			$qruserID=DatabaseFunctions::getInstance()->getUserFromQRCodeHash($QRCodeHash);
+			$qrcode_hotspot_url = $Settings->getSetting('qrcode_hotspot_url');
+			$qrcode_qrimages = $Settings->getSetting('qrcode_qrimages');
+			$qrcode_content = $qrcode_hotspot_url.$QRCodeHash.$qruserID['id']; //append user id at end
+				
+			QRcode::png($qrcode_content, $qrcode_qrimages.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
 		}
         // qrcode
     }
+	// qrcode
+	//user qrcode enabled/disabled
+    
+	if (\Grase\Clean::text($_POST['qrcode']) && \Grase\Clean::text($_POST['qrcode']) != $userqrcode) {
+			$qrcode_qrimages = $Settings->getSetting('qrcode_qrimages');
+			if ($userqrcode == "TRUE"){
+				DatabaseFunctions::getInstance()->deleteQRCodeHash($username);
+				unlink($qrcode_qrimages.md5($username).'.png');
 
+				$success[] = T_("QRCode disabled for user $username");
+				AdminLog::getInstance()->log("QRCode disabled for user $username");
+				$userqrcode = "FALSE";
+			}else{
+				if(($Settings->getSetting('qrcode')=='TRUE') AND (!\Grase\Validate::MACAddress(strtoupper($username)))){
+			
+					do {
+						$QRCodeHash = bin2hex(random_bytes(16));
+						
+					} while (!DatabaseFunctions::getInstance()->checkUniqueQRCode($QRCodeHash));
+					
+					DatabaseFunctions::getInstance()->setUserQRCode($username,$QRCodeHash);
+					$qrfilename=md5($username);
+					$qruserID=DatabaseFunctions::getInstance()->getUserFromQRCodeHash($QRCodeHash);
+					$qrcode_hotspot_url = $Settings->getSetting('qrcode_hotspot_url');
+					$qrcode_content = $qrcode_hotspot_url.$QRCodeHash.$qruserID['id']; //append user id at end
+				
+					QRcode::png($qrcode_content, $qrcode_qrimages.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
+					$userqrcode = "TRUE";
+					$success[] = T_("QRCode enabled for user $username");
+					AdminLog::getInstance()->log("QRCode enabled for user $username");
+				}
+
+			}
+	}
+	// qrcode
+	
     // Update group if changed
     if (\Grase\Clean::text($_POST['Group']) && \Grase\Clean::text($_POST['Group']) != $user['Group']) {
         $temperror = validate_group($_POST['Group']);
@@ -200,8 +252,12 @@ if (isset($_POST['deleteusersubmit'])) {
     require('display.php');
 	// qrcode
 	if(($Settings->getSetting('qrcode') == 'TRUE') AND (!\Grase\Validate::MACAddress(strtoupper($username)))) {
+					
+		$qrcode_qrimages = $Settings->getSetting('qrcode_qrimages');
+					
+		unlink($qrcode_qrimages.md5($username).'.png');
+		DatabaseFunctions::getInstance()->deleteQRCodeHash($username);
 
-		unlink(QRCODE_TMP_SERVERPATH.md5($username).'.png');
 	}
     // qrcode
     die; // TODO: Recode so don't need die (too many nests?)
@@ -223,5 +279,17 @@ $templateEngine->assign("user", $user);
 if ($user['AccountLock'] == true) {
     $templateEngine->warningMessage(T_('User account is locked and will not be able to login'));
 }
-
+// qrcode 
+if (($Settings->getSetting('qrcode') == 'TRUE') AND (!\Grase\Validate::MACAddress(strtoupper($username)))){
+		$templateEngine->assign("qrcode", TRUE);
+		
+		if ($userqrcode == "FALSE"){
+			$templateEngine->assign("qrcode_enabled", "");
+			$templateEngine->assign("qrcode_disabled", "selected");
+		}else{
+			$templateEngine->assign("qrcode_enabled", "selected");	
+			$templateEngine->assign("qrcode_disabled", "");	
+		}
+}
+// qrcode
 $templateEngine->displayPage('edituser.tpl');
