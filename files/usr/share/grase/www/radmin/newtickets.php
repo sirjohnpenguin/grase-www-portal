@@ -26,8 +26,8 @@ require_once 'includes/session.inc.php';
 require_once 'includes/misc_functions.inc.php';
 
 // qrcode
-require_once 'includes/qrcode_config.php';
 require_once 'includes/phpqrcode/qrlib.php'; 
+require_once 'includes/random_compat-2.0.4/lib/random.php'; 
 // qrcode
 
 function validate_form()
@@ -130,10 +130,13 @@ if (isset($_POST['batchesdelete'])) {
             }
             $users = array_merge($users, $fetchUsers);
         }
+		$qrcode_qrimages = $Settings->getSetting('qrcode_qrimages');
+
         foreach ($users as $user) {
             DatabaseFunctions::getInstance()->deleteUser($user['Username']);
 			// qrcode
-			unlink(QRCODE_TMP_SERVERPATH.md5($user['Username']).'.png');
+			unlink($qrcode_qrimages.md5($user['Username']).'.png');
+			DatabaseFunctions::getInstance()->deleteQRCodeHash($user['Username']);
 			// qrcode
             $success[] = "Deleting " . $user['Username'];
             // Maybe delete user from batch as we go to ensure if we fail
@@ -203,6 +206,10 @@ if (isset($_POST['createticketssubmit'])) {
         $Settings->setSetting('lastbatch', $batchID);
 
         $failedUsers = 0;
+		// qrcode
+		$qrcode_hotspot_url = $Settings->getSetting('qrcode_hotspot_url');
+		$qrcode_qrimages = $Settings->getSetting('qrcode_qrimages'); 
+		// qrcode
         for ($i = 0; $i < $user['numberoftickets']; $i++) {
             // Creating lots of users at once could timeout a script. Maybe add a set_time_limit(1) on each loop?
             if ($Settings->getSetting('simpleUsername')) {
@@ -230,15 +237,25 @@ if (isset($_POST['createticketssubmit'])) {
             ) {
 				
 				// qrcode
-				if($Settings->getSetting('qrcode')=='TRUE'){
-					$qrcode_var=$username."::".$password;
-					$qrcode_login_data=encrypt_qrcode($qrcode_var);
-					$qrfilename=md5($username);
-					
-					$codeContents = URL_GRASE_QRCODE.$qrcode_login_data; 
+				$qrcode = \Grase\Clean::text($_POST['qrcode']);
 
-					QRcode::png($codeContents, QRCODE_TMP_SERVERPATH.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
-                }
+				if(($Settings->getSetting('qrcode')=='TRUE') AND ($qrcode == "TRUE")){
+					do {
+						$QRCodeHash = bin2hex(random_bytes(16)); //random_compat library
+						
+					} while (!DatabaseFunctions::getInstance()->checkUniqueQRCode($QRCodeHash));
+					
+					DatabaseFunctions::getInstance()->setUserQRCode($username,$QRCodeHash);
+
+					$qrfilename=md5($username);			
+					$qruserID=DatabaseFunctions::getInstance()->getUserFromQRCodeHash($QRCodeHash);
+					$qrcode_content = $qrcode_hotspot_url.$QRCodeHash.$qruserID['id']; //append user id at end
+				
+					QRcode::png($qrcode_content, $qrcode_qrimages.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
+                }else{
+					DatabaseFunctions::getInstance()->setUserQRCode($username,false); //need it? i dont think so.
+
+				}
                 // qrcode
 				
                 AdminLog::getInstance()->log("Created new user $username");
@@ -289,5 +306,9 @@ $templateEngine->assign("listbatches", $Settings->listBatches());
 
 $templateEngine->assign("success", $success);
 $templateEngine->assign("error", $error);
-
+// qrcode 
+if ($Settings->getSetting('qrcode') == 'TRUE'){
+		$templateEngine->assign("qrcode", TRUE);
+}
+// qrcode
 $templateEngine->displayPage('newtickets.tpl');
