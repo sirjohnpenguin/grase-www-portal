@@ -24,10 +24,6 @@ require_once 'includes/pageaccess.inc.php';
 require_once 'includes/session.inc.php';
 require_once 'includes/misc_functions.inc.php';
 
-// qrcode
-require_once 'includes/qrcode_config.php';
-require_once 'includes/phpqrcode/qrlib.php'; 
-// qrcode
 
 $DBF = DatabaseFunctions::getInstance();
 
@@ -129,15 +125,15 @@ function printTickets($users, $title)
     
 	// qrcode
 	if($Settings->getSetting('qrcode') == 'TRUE'){
-
+		$qrcode_qrimages = $Settings->getSetting('qrcode_qrimages');
 		foreach ($users as $key => $userdata){
-			if (!\Grase\Validate::MACAddress(strtoupper($userdata['Username']))) { //if user != macaddress
-				$filename=QRCODE_TMP_SERVERPATH.md5($userdata['Username']).'.png';
+			if ((!\Grase\Validate::MACAddress(strtoupper($userdata['Username']))) AND (DatabaseFunctions::getInstance()->getUserQRCode($userdata['Username']))) { //if user != macaddress and QRCodeHash != NULL
+	
+				$filename=$qrcode_qrimages.md5($userdata['Username']).'.png';
 				$image='data:image/png;base64,'.base64_encode(file_get_contents($filename)); 
 				$users[$key]['qrimage']=$image;
 				$no_qrimage=FALSE;
-			}else{
-		
+			}else{		
 				$no_qrimage=TRUE;
 			}
 		}
