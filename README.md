@@ -12,11 +12,10 @@ See the Wiki page <https://github.com/GraseHotspot/grase-www-portal/wiki/Install
 
 This is the main Grase Hotspot package. It contains the web interface, and depends on the config packages.
 
-## qrcode support
+### qrcode support
 
 
 QR Code support using phpqrcode library from <http://phpqrcode.sourceforge.net/>
 Tested on ubuntu 14.04. Requires php5-gd
 
-Uses the openssl php functions for encrypt/decrypt credentials for login in the hotspot.
-
+Use random_compat lib <https://github.com/paragonie/random_compat> for token generation. Stores tokens in a table (raduserqrcode)
