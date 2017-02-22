@@ -1,0 +1,13 @@
+--
+-- in radius table
+--
+DROP TABLE IF EXISTS `raduserqrcode`;
+CREATE TABLE IF NOT EXISTS `raduserqrcode` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `Username` varchar(64) NOT NULL DEFAULT '',
+  `QRCodeHash` varchar(256) NOT NULL DEFAULT '',
+  PRIMARY KEY (`Username`),
+  UNIQUE KEY `userqrcode` (`id`,`Username`,`QRCodeHash`),
+  KEY `UserName` (`Username`(32))
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
