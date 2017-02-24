@@ -238,6 +238,7 @@ if (isset($_POST['createticketssubmit'])) {
 				
 				// qrcode
 				$qrcode = \Grase\Clean::text($_POST['qrcode']);
+				$qrcode_autologin = \Grase\Clean::text($_POST['qrcode_autologin']);
 
 				if(($Settings->getSetting('qrcode')=='TRUE') AND ($qrcode == "TRUE")){
 					do {
@@ -245,11 +246,10 @@ if (isset($_POST['createticketssubmit'])) {
 						
 					} while (!DatabaseFunctions::getInstance()->checkUniqueQRCode($QRCodeHash));
 					
-					DatabaseFunctions::getInstance()->setUserQRCode($username,$QRCodeHash);
+					DatabaseFunctions::getInstance()->setUserQRCode($username,$QRCodeHash,$qrcode_autologin);
 
 					$qrfilename=md5($username);			
-					$qruserID=DatabaseFunctions::getInstance()->getUserFromQRCodeHash($QRCodeHash);
-					$qrcode_content = $qrcode_hotspot_url.$QRCodeHash.$qruserID['id']; //append user id at end
+					$qrcode_content = $qrcode_hotspot_url.'?qrc='.$QRCodeHash;
 				
 					QRcode::png($qrcode_content, $qrcode_qrimages.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
                 }else{
@@ -309,6 +309,13 @@ $templateEngine->assign("error", $error);
 // qrcode 
 if ($Settings->getSetting('qrcode') == 'TRUE'){
 		$templateEngine->assign("qrcode", TRUE);
+	if ($Settings->getSetting('qrcode_autologin') == "TRUE"){
+		$templateEngine->assign("qrcode_autologin_enabled", "selected");
+		$templateEngine->assign("qrcode_autologin_disabled", "");
+	}else{
+		$templateEngine->assign("qrcode_autologin_enabled", "");
+		$templateEngine->assign("qrcode_autologin_disabled", "selected");
+	}
 }
 // qrcode
 $templateEngine->displayPage('newtickets.tpl');
