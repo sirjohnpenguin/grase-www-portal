@@ -10,22 +10,25 @@ load_templates(array('loginhelptext', 'belowloginhtml', 'termsandconditions', 'a
 $query = $loginurl['query'];
 parse_str($query, $uamopts);*/
 
+
 // qrcode
+
 if($Settings->getSetting('qrcode') == 'TRUE'){
 
 
 	if (isset($_GET['qrc'])){
 		$qrc = $_GET['qrc'];
 		$_SESSION['qrcode'] = $qrc;
+
 		header("Location: http://$lanIP:3990/prelogin");
 		die();
 		
-	}    
+	}
+	
 	if ($_SESSION['qrcode']){
-		$userID=substr($_SESSION['qrcode'],32);
-		$userTOKEN=substr($_SESSION['qrcode'],0,32);
-		$userQRDATA=DatabaseFunctions::getInstance()->getUserFromQRCodeHash($userTOKEN);
+		$userQRDATA=DatabaseFunctions::getInstance()->getUserFromQRCodeHash($_SESSION['qrcode']);
 		$username=$userQRDATA["Username"];
+		
 		
 		if ($userQRDATA["QRCodeHash"] == NULL){ //if user qrcode disabled, dieee()
 			session_destroy();
@@ -33,7 +36,7 @@ if($Settings->getSetting('qrcode') == 'TRUE'){
 			die();
 		}
 		
-		if (($userID == $userQRDATA["id"]) AND ($userTOKEN == $userQRDATA["QRCodeHash"])){
+		if ($_SESSION['qrcode'] == $userQRDATA["QRCodeHash"]){
 			$user_details=DatabaseFunctions::getInstance()->getUserDetails($username);
 			$username=$user_details["Username"];
 			$password=$user_details["Password"];
@@ -50,27 +53,54 @@ if($Settings->getSetting('qrcode') == 'TRUE'){
 			header("Location: http://$lanIP:3990/prelogin");
 			die();
 		}
-
+		
 		$challenge = $_GET['challenge'];
-		$userurl = urlencode(URL_USER_QRCODE);
-		$ident = '00';
+		$userurl = urlencode($Settings->getSetting('qrcode_user_url'));
+		$ident = '00';		
+		
+		if ($userQRDATA["Autologin"] == 'TRUE'){ //if autologin for current user
+			
+			if (! ( $username && $password && $challenge) )
+			{
+				session_destroy();
+				header("Location: http://$lanIP:3990/prelogin");
+			}
+			$hexchal = pack ("H32", $challenge);
+			$response = md5("\0" . $password . $hexchal);
+			$challenge = urlencode($challenge);
+			session_destroy();
+			
+			header("Location: http://$lanIP:3990/login?username=$username&response=$response&userurl=$userurl");
+			
+		}else{
+			$_SESSION["username"]=$username;
+			$smarty->assign("username", 'value='.$_SESSION["username"].'');
+			$smarty->assign("password",' autofocus ');
+			session_destroy();
 
-
-		if (! ( $username && $password && $challenge) )
-		{
-			header("Location: http://$lanIP:3990/prelogin");
 		}
-		$hexchal = pack ("H32", $challenge);
-		$response = md5("\0" . $password . $hexchal);
-		$challenge = urlencode($challenge);
-		session_destroy();
 		
-		header("Location: http://$lanIP:3990/login?username=$username&response=$response&userurl=$userurl");
-		//die();
+	}else{
 		
+	session_destroy();
+	$smarty->assign("username", 'autofocus');
+	$smarty->assign("password",'');
 	}
+	
+	
+	
+	
+}else{
+	session_destroy();
+	$smarty->assign("username", 'autofocus');
+	$smarty->assign("password",'');
+
 }
+
+
 // qrcode
+
+
 
 if(isset($_GET['disablejs']))
 {
@@ -184,11 +214,11 @@ switch($res)
             break;
         }
         //
-        if ($nojs){ // if js is disabled
+        //if ($nojs){ // if js is disabled
 			load_templates(array('loggedinnojshtml'));
 			$smarty->display('loggedin.tpl');
 			exit;
-		}
+		//}
         
         break; // show default       
         
