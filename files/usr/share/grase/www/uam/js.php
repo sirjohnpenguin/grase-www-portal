@@ -4,7 +4,7 @@ header("Content-Type: text/javascript; charset=utf-8");
 require_once('includes/site.inc.php');
 // qrcode
 // set qrcode_user_url
-if ($Settings->getSetting('qrcode')=='TRUE'){
+if (($Settings->getSetting('qrcode')=='TRUE') AND ($Settings->getSetting('qrcode_user_url') != "")){
 	$userurl='var userurl=encodeURIComponent("'.$Settings->getSetting('qrcode_user_url').'")';
 }else{
 	$userurl="";
