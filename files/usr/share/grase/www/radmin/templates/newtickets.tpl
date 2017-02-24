@@ -54,12 +54,21 @@
 {if $qrcode}
        <!--qrcode-->
     <div>
-        <label for='qrcodelink'>{t}QR Code ticket{/t}</label>
+        <label for='qrcode'>{t}QR Code ticket{/t}</label>
 			<select name="qrcode">
 				<option value="TRUE" {$qrcode_enabled|escape}>Enabled</option>
 				<option value="FALSE" {$qrcode_disabled|escape}>Disabled</option>
 			</select>
-        <span id="qrcodelinkInfo">{t}Generate QR Code for batch users{/t}</span>
+        <span id="qrcode">{t}Generate QR Code for batch users{/t}</span>
+    </div>  
+   
+    <div>
+        <label for='qrcode_autologin'>{t}QR Code autologin{/t}</label>
+			<select name="qrcode_autologin">
+				<option value="TRUE" {$qrcode_autologin_enabled|escape}>Enabled</option>
+				<option value="FALSE" {$qrcode_autologin_disabled|escape}>Disabled</option>
+			</select>
+        <span id="qrcode_autologin">{t}If Enabled, user and password will not be required. If disabled, it will ask a password.{/t}</span>
     </div>   
    <!--qrcode-->
 {/if}
