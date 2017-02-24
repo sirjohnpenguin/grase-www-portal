@@ -92,13 +92,22 @@
     
         <label for='qrcode_hotspot_url'>{t}Hotspot url{/t}</label>
         <input type="qrcode_hotspot_url" name="qrcode_hotspot_url" id="qrcode_hotspot_url" value='{$qrcode_hotspot_url|escape}'/>
-        <span id="qrcode_hotspot_url">{t}Hotspot url, do not remove the "?qrc=" parameter.{/t}</span>
+        <span id="qrcode_hotspot_url">{t}Hotspot url, the parameter "?qrc=" will be added at the end of the url.{/t}</span>
     </div>
      
     <div>
         <label for='qrcode_user_url'>{t}Url redirect for user{/t}</label>
         <input type="qrcode_user_url" name="qrcode_user_url" id="qrcode_user_url" value='{$qrcode_user_url|escape}'/>
-        <span id="qrcode_user_url">{t}Redirect succesfully logged user to this url.{/t}</span>
+        <span id="qrcode_user_url">{t}Redirect succesfully logged user to this url. Leave empty to disable. {/t}</span>
+    </div> 
+    
+        <div>
+        <label for='qrcode_autologin'>{t}Autologin{/t}</label>
+			<select name="qrcode_autologin">
+				<option value="TRUE" {$qrcode_autologin_enabled|escape}>Enabled</option>
+				<option value="FALSE" {$qrcode_autologin_disabled|escape}>Disabled</option>
+			</select>
+        <span id="qrcode_autologin">{t}Global default option. If Enabled, not user and password will be required. If disabled, it will ask a password. {/t}</span>
     </div> 
     
 {/if}    
