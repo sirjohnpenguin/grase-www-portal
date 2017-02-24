@@ -46,10 +46,14 @@ $user = DatabaseFunctions::getInstance()->getUserDetails($_GET['username']);
 $username = $user['Username'];
 
 // qrcode
-if (DatabaseFunctions::getInstance()->getUserQRCode($_GET['username']) == NULL){
+$userqr=DatabaseFunctions::getInstance()->getUserQRCode($_GET['username']);
+$userqrcode = "TRUE";
+if ($userqr["QRCodeHash"] == NULL){
 	$userqrcode = "FALSE";
-}else{
-	$userqrcode = "TRUE";
+}
+$userqrcode_autologin = "FALSE";
+if ($userqr["Autologin"] == "TRUE"){
+	$userqrcode_autologin = "TRUE";
 }
 // qrcode
 
@@ -73,12 +77,11 @@ if (isset($_POST['updateusersubmit'])) {   // Process form for changed items and
 				
 			} while (!DatabaseFunctions::getInstance()->checkUniqueQRCode($QRCodeHash));
 			
-			DatabaseFunctions::getInstance()->setUserQRCode($username,$QRCodeHash);
+			DatabaseFunctions::getInstance()->setUserQRCode($username,$QRCodeHash,$userqrcode_autologin);// set previuous autologin option
 			$qrfilename=md5($username);
-			$qruserID=DatabaseFunctions::getInstance()->getUserFromQRCodeHash($QRCodeHash);
 			$qrcode_hotspot_url = $Settings->getSetting('qrcode_hotspot_url');
 			$qrcode_qrimages = $Settings->getSetting('qrcode_qrimages');
-			$qrcode_content = $qrcode_hotspot_url.$QRCodeHash.$qruserID['id']; //append user id at end
+			$qrcode_content = $qrcode_hotspot_url.'?qrc='.$QRCodeHash;
 				
 			QRcode::png($qrcode_content, $qrcode_qrimages.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
 		}
@@ -104,11 +107,10 @@ if (isset($_POST['updateusersubmit'])) {   // Process form for changed items and
 						
 					} while (!DatabaseFunctions::getInstance()->checkUniqueQRCode($QRCodeHash));
 					
-					DatabaseFunctions::getInstance()->setUserQRCode($username,$QRCodeHash);
+					DatabaseFunctions::getInstance()->setUserQRCode($username,$QRCodeHash,$Settings->getSetting('qrcode_autologin')); //set qrcode_autologin default option
 					$qrfilename=md5($username);
-					$qruserID=DatabaseFunctions::getInstance()->getUserFromQRCodeHash($QRCodeHash);
 					$qrcode_hotspot_url = $Settings->getSetting('qrcode_hotspot_url');
-					$qrcode_content = $qrcode_hotspot_url.$QRCodeHash.$qruserID['id']; //append user id at end
+					$qrcode_content = $qrcode_hotspot_url.$QRCodeHash;
 				
 					QRcode::png($qrcode_content, $qrcode_qrimages.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
 					$userqrcode = "TRUE";
@@ -116,6 +118,20 @@ if (isset($_POST['updateusersubmit'])) {   // Process form for changed items and
 					AdminLog::getInstance()->log("QRCode enabled for user $username");
 				}
 
+			}
+	}
+    
+    // if qrcode autologin is enabled/disabled
+	if (\Grase\Clean::text($_POST['qrcode_autologin']) && \Grase\Clean::text($_POST['qrcode_autologin']) != $userqrcode_autologin) {
+			if ($userqrcode_autologin == "TRUE"){
+				DatabaseFunctions::getInstance()->setUserQRCode($username,$userqr["QRCodeHash"],"FALSE");
+				$userqrcode_autologin="FALSE";
+				$success[] = T_("QRCode autologin disabled for user $username");
+
+			}else{
+				DatabaseFunctions::getInstance()->setUserQRCode($username,$userqr["QRCodeHash"],"TRUE");
+				$userqrcode_autologin="TRUE";
+				$success[] = T_("QRCode autologin enabled for user $username");
 			}
 	}
 	// qrcode
@@ -283,13 +299,22 @@ if ($user['AccountLock'] == true) {
 if (($Settings->getSetting('qrcode') == 'TRUE') AND (!\Grase\Validate::MACAddress(strtoupper($username)))){
 		$templateEngine->assign("qrcode", TRUE);
 		
+		$templateEngine->assign("qrcode_enabled", "selected");	
+		$templateEngine->assign("qrcode_disabled", "");	
+		
 		if ($userqrcode == "FALSE"){
 			$templateEngine->assign("qrcode_enabled", "");
 			$templateEngine->assign("qrcode_disabled", "selected");
-		}else{
-			$templateEngine->assign("qrcode_enabled", "selected");	
-			$templateEngine->assign("qrcode_disabled", "");	
 		}
+		
+		$templateEngine->assign("qrcode_autologin_enabled", "");
+		$templateEngine->assign("qrcode_autologin_disabled", "selected");
+		
+		if ($userqrcode_autologin == "TRUE"){
+			$templateEngine->assign("qrcode_autologin_enabled", "selected");
+			$templateEngine->assign("qrcode_autologin_disabled", "");
+		}
+		
 }
 // qrcode
 $templateEngine->displayPage('edituser.tpl');
