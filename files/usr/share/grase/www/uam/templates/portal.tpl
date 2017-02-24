@@ -47,8 +47,8 @@
         {if !$hidenormallogin}
         <form method="post"  action="nojslogin.php" autocomplete="off" class="form-signin">
             <h2>{t}Voucher Login{/t}</h2>
-            <input class="form-control" id="username" name="username" type="text" required autofocus placeholder="{t}Username{/t}"/>
-            <input class="form-control" id="password" name="password" type="password" required placeholder="{t}Password{/t}"/>
+            <input class="form-control" id="username" name="username" type="text" {$username|escape} required placeholder="{t}Username{/t}"/>
+            <input class="form-control" id="password" name="password" type="password" {$password|escape} required placeholder="{t}Password{/t}"/>
             <input type="hidden" name="challenge" value="{$challenge|escape}"/>
             <input type="hidden" name="response" value=""/>
             <input type="hidden" name="userurl" value="{$user_url|escape}"/>
