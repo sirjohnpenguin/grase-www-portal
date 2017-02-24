@@ -46,11 +46,13 @@ if (isset($_POST['submit'])) {
     $new_qrcode_hotspot_url = \Grase\Clean::text($_POST['qrcode_hotspot_url']);
     $new_qrcode_qrimages = \Grase\Clean::text($_POST['qrcode_qrimages']);
     $new_qrcode_user_url = \Grase\Clean::text($_POST['qrcode_user_url']);
+    $new_qrcode_autologin = \Grase\Clean::text($_POST['qrcode_autologin']);
 	
 	if ($Settings->getSetting('qrcode') == "TRUE"){
 		qrcode_hotspot_url($new_qrcode_hotspot_url);
 		qrcode_qrimages($new_qrcode_qrimages);
 		qrcode_user_url($new_qrcode_user_url);
+		qrcode_autologin($new_qrcode_autologin);
 	}
 	updateqrcode($newqrcode);
 	
@@ -135,6 +137,7 @@ if (($Settings->getSetting('qrcode') != 'TRUE') AND ($Settings->getSetting('qrco
 	$Settings->setSetting('qrcode_qrimages', '/usr/share/grase/qrimages/');
 	$Settings->setSetting('qrcode_hotspot_url', 'http://10.1.0.1/uam/hotspot?qrc=');
 	$Settings->setSetting('qrcode_user_url', 'http://google.com/');
+	$Settings->setSetting('qrcode_autologin', 'FALSE');
 
 }
 if ($Settings->getSetting('qrcode')=='TRUE'){
@@ -146,8 +149,16 @@ if ($Settings->getSetting('qrcode')=='TRUE'){
 	$templateEngine->assign("qrcode_disabled", "selected");	
 }
 $templateEngine->assign("qrcode_qrimages",$Settings->getSetting('qrcode_qrimages') );	
-$templateEngine->assign("qrcode_hotspot_url",$Settings->getSetting('qrcode_hotspot_url') );	
+$templateEngine->assign("qrcode_hotspot_url",$Settings->getSetting('qrcode_hotspot_url'));	
 $templateEngine->assign("qrcode_user_url",$Settings->getSetting('qrcode_user_url') );	
+
+if ($Settings->getSetting('qrcode_autologin')=='TRUE'){
+	$templateEngine->assign("qrcode_autologin_enabled",'selected');	
+	$templateEngine->assign("qrcode_autologin_disabled",'');	
+}else{
+	$templateEngine->assign("qrcode_autologin_enabled",'');	
+	$templateEngine->assign("qrcode_autologin_disabled",'selected');	
+}
 
 // qrcode
 
@@ -227,14 +238,30 @@ function qrcode_user_url($newqrcode)
         return true;
     }
 
-    if ($newqrcode == "") {
-        $error[] = T_("QR Code images dir invalid");
-    } else {
         if ($Settings->setSetting('qrcode_user_url', $newqrcode)) {
             $success[] = T_("QR Code redirect url updated");
             AdminLog::getInstance()->log(T_("QR Code redirect url updated"));
         } else {
             $error[] = T_("Error Saving QR Code redirect url");
+        }    
+}
+
+function qrcode_autologin($newqrcode)
+{
+    global $error, $Settings, $success;
+
+    if ($Settings->getSetting('qrcode_autologin') == $newqrcode) {
+        return true;
+    }
+
+    if ($newqrcode == "") {
+        $error[] = T_("QR Code autologin invalid");
+    } else {
+        if ($Settings->setSetting('qrcode_autologin', $newqrcode)) {
+            $success[] = T_("QR Code autologin updated");
+            AdminLog::getInstance()->log(T_("QR Code autologin updated"));
+        } else {
+            $error[] = T_("Error Saving QR Code autologin option");
         }
     }
 }
