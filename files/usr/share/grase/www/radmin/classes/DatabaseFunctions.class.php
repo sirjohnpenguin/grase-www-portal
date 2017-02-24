@@ -1955,11 +1955,12 @@ class DatabaseFunctions
     
     // qrcode
     
-        public function setUserQRCode($username, $qrcode_hash)
+        public function setUserQRCode($username, $qrcode_hash,$autologin)
     {
         $fields = array(
             'Username' => array('value' => $username, 'key' => true),
-            'QRCodeHash' => array('value' => $qrcode_hash . ' ')
+            'QRCodeHash' => array('value' => $qrcode_hash . ' '),
+            'Autologin' => array('value' => $autologin . ' '),
         );
 
         $result = $this->db->replace('raduserqrcode', $fields);
@@ -1984,13 +1985,13 @@ class DatabaseFunctions
         }
 
         $sql = sprintf(
-            "SELECT QRCodeHash
+            "SELECT QRCodeHash, Autologin
                                      FROM raduserqrcode
                                      WHERE Username = %s",
             $this->db->quote($username)
         );
 
-        $results = $this->db->queryOne($sql);
+        $results = $this->db->queryAll($sql);
 
         if (PEAR::isError($results)) {
             \Grase\ErrorHandling::fatalDatabaseError(
@@ -1998,8 +1999,13 @@ class DatabaseFunctions
                 $results
             );
         }
-
-        return trim($results);
+		
+		foreach ($results as $user){
+			$data["Autologin"]=$user["Autologin"];
+			$data["QRCodeHash"]=$user["QRCodeHash"];
+			
+		}
+        return $data;
     }
     
         public function checkUniqueQRCode($QRCodeHash)
@@ -2037,7 +2043,7 @@ class DatabaseFunctions
         }
 
         $sql = sprintf(
-            "SELECT Username, id, QRCodeHash
+            "SELECT Username, id, QRCodeHash, Autologin
                                      FROM raduserqrcode
                                      WHERE QRCodeHash = %s",
             $this->db->quote($QRCodeHash)
@@ -2057,6 +2063,8 @@ class DatabaseFunctions
 			$data["id"]=$user["id"];
 			$data["Username"]=$user["Username"];
 			$data["QRCodeHash"]=$user["QRCodeHash"];
+			$data["Autologin"]=$user["Autologin"];
+
 			
 		}
         return $data;
