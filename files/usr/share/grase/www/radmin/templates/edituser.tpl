@@ -72,6 +72,15 @@
 				<option value="FALSE" {$qrcode_disabled|escape}>Disabled</option>
 			</select>
         <span id="qrcodelinkInfo">{t}QR Code enabled/disabled for current user{/t}</span>
+    </div>       
+    
+    <div>
+        <label for='qrcode_autologin'>{t}QR Code autologin{/t}</label>
+			<select name="qrcode_autologin">
+				<option value="TRUE" {$qrcode_autologin_enabled|escape}>Enabled</option>
+				<option value="FALSE" {$qrcode_autologin_disabled|escape}>Disabled</option>
+			</select>
+        <span id="qrcode_autologin">{t}If Enabled, user and password will not be required. If disabled, it will ask a password.{/t}</span>
     </div>   
    <!--qrcode-->
 {/if}
