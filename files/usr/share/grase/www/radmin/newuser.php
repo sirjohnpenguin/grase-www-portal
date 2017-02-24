@@ -171,22 +171,23 @@ if (isset($_POST['newusersubmit']) || isset($_POST['newmachinesubmit'])) {
         // qrcode
        	if(($Settings->getSetting('qrcode')=='TRUE') AND ($type=='User')){
 			$user['qrcode'] = \Grase\Clean::text($_POST['qrcode']);
+			$user['qrcode_autologin'] = \Grase\Clean::text($_POST['qrcode_autologin']);
+			
 			if ($user['qrcode'] == "TRUE"){			
 				do {
 					$QRCodeHash = bin2hex(random_bytes(16)); //random_compat library
 					
 				} while (!DatabaseFunctions::getInstance()->checkUniqueQRCode($QRCodeHash));
-				
-				DatabaseFunctions::getInstance()->setUserQRCode($user['Username'],$QRCodeHash);
+								
+				DatabaseFunctions::getInstance()->setUserQRCode($user['Username'],$QRCodeHash,$user["qrcode_autologin"]);
 				$qrfilename=md5($user['Username']);
-				$qruserID=DatabaseFunctions::getInstance()->getUserFromQRCodeHash($QRCodeHash);
 				$qrcode_hotspot_url = $Settings->getSetting('qrcode_hotspot_url');
 				$qrcode_qrimages = $Settings->getSetting('qrcode_qrimages');
-				$qrcode_content = $qrcode_hotspot_url.$QRCodeHash.$qruserID['id']; //append user id at end
+				$qrcode_content = $qrcode_hotspot_url.'?qrc='.$QRCodeHash;
 				
 				QRcode::png($qrcode_content, $qrcode_qrimages.$qrfilename.'.png', QR_ECLEVEL_L, 4); 
 			}else{
-				DatabaseFunctions::getInstance()->setUserQRCode($user['Username'],false);
+				//DatabaseFunctions::getInstance()->setUserQRCode($user['Username'],false);
 			}
 		}
         // qrcode
@@ -207,7 +208,13 @@ $templateEngine->assign("user", $user);
 // qrcode
 if ($Settings->getSetting('qrcode') == "TRUE"){
 	$templateEngine->assign("qrcode", TRUE);
-
+	if ($Settings->getSetting('qrcode_autologin') == "TRUE"){
+		$templateEngine->assign("qrcode_autologin_enabled", "selected");
+		$templateEngine->assign("qrcode_autologin_disabled", "");
+	}else{
+		$templateEngine->assign("qrcode_autologin_enabled", "");
+		$templateEngine->assign("qrcode_autologin_disabled", "selected");
+	}
 }
 
 // qrcode
